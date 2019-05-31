@@ -1,6 +1,6 @@
 # Bitcoin-Tracing
 Please use index.py to run the default
 
-cd BT <file path>
+cd BT/web <file path>
   
 python index.py
