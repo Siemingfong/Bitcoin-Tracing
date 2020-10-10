@@ -66,14 +66,15 @@ def retrive_address(address, from_mem=False):
     return res
 
 def get_transactions_by_address(address, tag_search=False):
-    r = requests.get('https://blockchain.info/rawaddr/%s'%address)
+    r = requests.get('https://www.bitgo.com/api/v1/address/%s/tx'%address)
     
     if r.text == 'Checksum does not validate':
         return { 'from':[], 'to':[] , 'valid':False}
     
+    print(r.text)
     res = r.json()
     
-    txs = res['txs']
+    txs = res['transactions']
     
     ans = {
         'from':[],
@@ -86,27 +87,28 @@ def get_transactions_by_address(address, tag_search=False):
     
     if tag_search:
         for tx in tqdm(txs):
-            for inp in tx['inputs']:
-                if inp['prev_out']['addr'] != address and retrive_address(inp['prev_out']['addr'], from_mem=True)['type'] != 'unknown':
-                    ans['from'].append(inp['prev_out']['addr'])
+            for inp in tx['entries']:
+                if inp['account'] != address and retrive_address(inp['account'], from_mem=True)['type'] != 'unknown':
+                    ans['from'].append(inp['account'])
+                    
+            for outs in tx['outputs']:
+                if outs['account'] != address and retrive_address(outs['account'], from_mem=True)['type'] != 'unknown':
+                    ans['from'].append(outs['account'])
 
-            for outs in tx['out']:
-                if outs['addr'] != address and retrive_address(outs['addr'], from_mem=True)['type'] != 'unknown':
-                    ans['from'].append(outs['addr'])
     else:
         for tx in tqdm(txs):
-            for inp in tx['inputs']:
+            for inp in tx['entries']:
                 if in_count == limit:
                         break
-                if inp['prev_out']['addr'] != address:
-                    ans['from'].append(inp['prev_out']['addr'])
+                if inp['account'] != address:
+                    ans['from'].append(inp['account'])
                     in_count += 1
-
-            for outs in tx['out']:
+                    
+            for outs in tx['outputs']:
                 if out_count == limit:
                         break
-                if outs['addr'] != address:
-                    ans['to'].append(outs['addr'])
+                if outs['account'] != address:
+                    ans['to'].append(outs['account'])
                     out_count += 1
     return ans
 
@@ -148,20 +150,16 @@ def read_from_csv():
     print('load mixer')
     with open('../data_loader/Mixer.csv', newline='') as csvfile:
 
-        # 讀取 CSV 檔案內容
         rows = csv.reader(csvfile)
 
-        # 以迴圈輸出每一列
         for row in rows:
             mixer[row[1]] = row
     
     print('load tager')
     with open('../data_loader/dataset_IEEEBlockchain2018.csv', newline='', encoding="utf-8") as csvfile:
 
-        # 讀取 CSV 檔案內容
         rows = csv.reader(csvfile)
 
-        # 以迴圈輸出每一列
         for row in rows:
             tager[row[1]] = row
 
